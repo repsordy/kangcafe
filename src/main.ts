@@ -1,14 +1,12 @@
 import './style.css'
 
-// 데이터 및 상태 관리
-let currentTab = 'dashboard'; // 'dashboard' 또는 'game'
+let currentTab = 'dashboard';
 let orders = [
   { id: 1, menu: '아메리카노 (ICE)', qty: 2, status: '준비중', time: '10:42' },
   { id: 2, menu: '카페 라떼 (HOT)', qty: 1, status: '완료', time: '10:35' },
   { id: 3, menu: '치즈 케이크', qty: 1, status: '완료', time: '10:20' },
 ];
 
-// 게임 관련 상태
 let targetNumber = Math.floor(Math.random() * 50) + 1;
 let attempts = 0;
 let gameMessage = '1부터 50 사이의 숫자를 맞춰보세요!';
@@ -19,7 +17,6 @@ function render() {
   app.innerHTML = `
     <div style="font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; min-height: 100vh;">
       
-      <!-- 상단 타이틀 및 탭 메뉴 -->
       <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 10px;">
         <h1 style="margin: 0; font-size: 22px; color: #333;">☕ 강카페 통합 관리자</h1>
         <div>
@@ -28,7 +25,6 @@ function render() {
         </div>
       </header>
 
-      <!-- 대시보드 화면 -->
       <div id="view-dashboard" style="display: ${currentTab === 'dashboard' ? 'block' : 'none'};">
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px;">
           <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
@@ -74,7 +70,6 @@ function render() {
         </div>
       </div>
 
-      <!-- 게임 화면 (숫자 맞추기) -->
       <div id="view-game" style="display: ${currentTab === 'game' ? 'block' : 'none'}; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center;">
         <h2 style="color: #333; margin-top: 0;">🎯 카페 쉬는 시간 숫자 맞추기</h2>
         <p style="color: #666; margin-bottom: 20px;">${gameMessage}</p>
@@ -89,7 +84,6 @@ function render() {
     </div>
   `;
 
-  // 탭 전환 이벤트
   document.querySelector('#tab-dashboard')?.addEventListener('click', () => {
     currentTab = 'dashboard';
     render();
@@ -100,7 +94,6 @@ function render() {
     render();
   });
 
-  // 주문 상태 변경 버튼 이벤트
   document.querySelectorAll('.status-btn').forEach(button => {
     button.addEventListener('click', (e) => {
       const id = Number((e.currentTarget as HTMLElement).getAttribute('data-id'));
@@ -114,7 +107,6 @@ function render() {
     });
   });
 
-  // 게임 확인 버튼 이벤트
   document.querySelector('#guess-btn')?.addEventListener('click', () => {
     const inputEl = document.querySelector('#guess-input') as HTMLInputElement;
     const val = Number(inputEl.value);
@@ -122,7 +114,7 @@ function render() {
 
     attempts++;
     if (val === targetNumber) {
-      gameMessage = `🎉 정답입니다! ${targetNumber}을(를) ${attempts번}만에 맞추셨습니다!`;
+      gameMessage = `🎉 정답입니다! ${targetNumber}을(를) ${attempts}회 만에 맞추셨습니다!`;
     } else if (val < targetNumber) {
       gameMessage = `📈 UP! 더 큰 숫자입니다.`;
     } else {
@@ -131,7 +123,6 @@ function render() {
     render();
   });
 
-  // 게임 리셋 버튼 이벤트
   document.querySelector('#reset-game')?.addEventListener('click', () => {
     targetNumber = Math.floor(Math.random() * 50) + 1;
     attempts = 0;
