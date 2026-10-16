@@ -16,8 +16,8 @@ export function renderLogin(onLoginSuccess: () => void): string {
         <p style="color: #6b7280; font-size: 14px; margin-bottom: 24px;">관리자 계정으로 로그인해주세요.</p>
         
         <form id="login-form" style="display: flex; flex-direction: column; gap: 14px;">
-          <input type="text" id="login-id" placeholder="아이디" value="admin" style="padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 15px;" />
-          <input type="password" id="login-pw" placeholder="비밀번호" value="1234" style="padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 15px;" />
+          <input type="text" id="login-id" placeholder="아이디" value="kangcafe" style="padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 15px;" />
+          <input type="password" id="login-pw" placeholder="비밀번호" value="1111" style="padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 15px;" />
           <button type="submit" style="padding: 12px; background-color: #2563eb; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 6px;">로그인</button>
         </form>
       </div>
