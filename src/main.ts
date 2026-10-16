@@ -105,9 +105,9 @@ function render() {
 function initGame() {
   const canvas = document.querySelector('#gameCanvas') as HTMLCanvasElement;
   if (!canvas) return;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D; // <--- 이 부분에 'as CanvasRenderingContext2D'를 붙여줍니다.
   if (!ctx) return;
-
+  
   let playerX = 180;
   const playerY = 350;
   const playerWidth = 40;
