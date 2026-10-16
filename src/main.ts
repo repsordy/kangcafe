@@ -7,10 +7,6 @@ let orders = [
   { id: 3, menu: '치즈 케이크', qty: 1, status: '완료', time: '10:20' },
 ];
 
-let targetNumber = Math.floor(Math.random() * 50) + 1;
-let attempts = 0;
-let gameMessage = '1부터 50 사이의 숫자를 맞춰보세요!';
-
 function render() {
   const app = document.querySelector<HTMLDivElement>('#app')!;
   
@@ -21,7 +17,7 @@ function render() {
         <h1 style="margin: 0; font-size: 22px; color: #333;">☕ 강카페 통합 관리자</h1>
         <div>
           <button id="tab-dashboard" style="padding: 6px 12px; margin-right: 5px; cursor: pointer; border: none; border-radius: 4px; background-color: ${currentTab === 'dashboard' ? '#2563eb' : '#e5e7eb'}; color: ${currentTab === 'dashboard' ? 'white' : '#333'}; font-weight: bold;">대시보드</button>
-          <button id="tab-game" style="padding: 6px 12px; cursor: pointer; border: none; border-radius: 4px; background-color: ${currentTab === 'game' ? '#2563eb' : '#e5e7eb'}; color: ${currentTab === 'game' ? 'white' : '#333'}; font-weight: bold;">🎮 미니게임</button>
+          <button id="tab-game" style="padding: 6px 12px; cursor: pointer; border: none; border-radius: 4px; background-color: ${currentTab === 'game' ? '#2563eb' : '#e5e7eb'}; color: ${currentTab === 'game' ? 'white' : '#333'}; font-weight: bold;">🎮 똥피하기</button>
         </div>
       </header>
 
@@ -70,15 +66,11 @@ function render() {
         </div>
       </div>
 
-      <div id="view-game" style="display: ${currentTab === 'game' ? 'block' : 'none'}; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center;">
-        <h2 style="color: #333; margin-top: 0;">🎯 카페 쉬는 시간 숫자 맞추기</h2>
-        <p style="color: #666; margin-bottom: 20px;">${gameMessage}</p>
-        <div style="margin-bottom: 20px;">
-          <input type="number" id="guess-input" placeholder="1~50 숫자 입력" style="padding: 10px; font-size: 16px; width: 150px; border: 1px solid #ccc; border-radius: 4px; text-align: center;" />
-          <button id="guess-btn" style="padding: 10px 20px; font-size: 16px; background-color: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">확인</button>
-        </div>
-        <p style="font-size: 14px; color: #888;">시도 횟수: <b>${attempts}회</b></p>
-        <button id="reset-game" style="padding: 6px 12px; background-color: #e5e7eb; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;">다시 하기</button>
+      <div id="view-game" style="display: ${currentTab === 'game' ? 'block' : 'none'}; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center;">
+        <h2 style="color: #333; margin-top: 0;">💩 원두 똥피하기 게임</h2>
+        <p style="color: #666; font-size: 14px; margin-bottom: 10px;">좌우 방향키 또는 마우스로 컵을 움직여 떨어지는 원두를 피하세요!</p>
+        <canvas id="gameCanvas" width="400" height="400" style="background: #1e293b; border-radius: 8px; display: block; margin: 0 auto; cursor: pointer;"></canvas>
+        <button id="start-game-btn" style="margin-top: 15px; padding: 8px 16px; background-color: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">게임 시작 / 재시작</button>
       </div>
 
     </div>
@@ -92,6 +84,7 @@ function render() {
   document.querySelector('#tab-game')?.addEventListener('click', () => {
     currentTab = 'game';
     render();
+    initGame();
   });
 
   document.querySelectorAll('.status-btn').forEach(button => {
@@ -106,29 +99,94 @@ function render() {
       render();
     });
   });
+}
 
-  document.querySelector('#guess-btn')?.addEventListener('click', () => {
-    const inputEl = document.querySelector('#guess-input') as HTMLInputElement;
-    const val = Number(inputEl.value);
-    if (!val) return;
+// 똥피하기 게임 로직
+function initGame() {
+  const canvas = document.querySelector('#gameCanvas') as HTMLCanvasElement;
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
 
-    attempts++;
-    if (val === targetNumber) {
-      gameMessage = `🎉 정답입니다! ${targetNumber}을(를) ${attempts}회 만에 맞추셨습니다!`;
-    } else if (val < targetNumber) {
-      gameMessage = `📈 UP! 더 큰 숫자입니다.`;
-    } else {
-      gameMessage = `📉 DOWN! 더 작은 숫자입니다.`;
+  let playerX = 180;
+  const playerY = 350;
+  const playerWidth = 40;
+  const playerHeight = 30;
+
+  let obstacles: { x: number; y: number; speed: number }[] = [];
+  let score = 0;
+  let isPlaying = false;
+  let animationId: number;
+
+  // 마우스 움직임으로 조작
+  canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    playerX = e.clientX - rect.left - playerWidth / 2;
+    if (playerX < 0) playerX = 0;
+    if (playerX > canvas.width - playerWidth) playerX = canvas.width - playerWidth;
+  });
+
+  document.querySelector('#start-game-btn')?.addEventListener('click', () => {
+    obstacles = [];
+    score = 0;
+    isPlaying = true;
+    cancelAnimationFrame(animationId);
+    loop();
+  });
+
+  function loop() {
+    if (!isPlaying) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 플레이어(카페 컵) 그리기
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(playerX, playerY, playerWidth, playerHeight);
+
+    // 장애물(원두) 생성
+    if (Math.random() < 0.05) {
+      obstacles.push({
+        x: Math.random() * (canvas.width - 20),
+        y: 0,
+        speed: 3 + Math.random() * 4
+      });
     }
-    render();
-  });
 
-  document.querySelector('#reset-game')?.addEventListener('click', () => {
-    targetNumber = Math.floor(Math.random() * 50) + 1;
-    attempts = 0;
-    gameMessage = '새 게임 시작! 1부터 50 사이의 숫자를 맞춰보세요!';
-    render();
-  });
+    // 장애물 이동 및 충돌 체크
+    ctx.fillStyle = '#f59e0b';
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+      let obs = obstacles[i];
+      obs.y += obs.speed;
+      ctx.fillRect(obs.x, obs.y, 20, 20);
+
+      // 충돌 체크
+      if (
+        obs.x < playerX + playerWidth &&
+        obs.x + 20 > playerX &&
+        obs.y < playerY + playerHeight &&
+        obs.y + 20 > playerY
+      ) {
+        isPlaying = false;
+        ctx.fillStyle = 'white';
+        ctx.font = '20px sans-serif';
+        ctx.fillText(`게임 종료! 점수: ${score}`, 90, 200);
+        return;
+      }
+
+      // 화면 아래로 나가면 점수 증가 후 제거
+      if (obs.y > canvas.height) {
+        obstacles.splice(i, 1);
+        score += 10;
+      }
+    }
+
+    // 점수 표시
+    ctx.fillStyle = 'white';
+    ctx.font = '14px sans-serif';
+    ctx.fillText(`점수: ${score}`, 15, 25);
+
+    animationId = requestAnimationFrame(loop);
+  }
 }
 
 render();
