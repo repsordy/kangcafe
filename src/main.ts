@@ -7,6 +7,10 @@ let orders = [
   { id: 3, menu: '치즈 케이크', qty: 1, status: '완료', time: '10:20' },
 ];
 
+// 모바일 친화적인 터치 미니게임 상태
+let lotteryResult = '버튼을 눌러 오늘의 음료를 뽑아보세요!';
+let isDrawing = false;
+
 function render() {
   const app = document.querySelector<HTMLDivElement>('#app')!;
   
@@ -17,10 +21,11 @@ function render() {
         <h1 style="margin: 0; font-size: 22px; color: #333;">☕ 강카페 통합 관리자</h1>
         <div>
           <button id="tab-dashboard" style="padding: 6px 12px; margin-right: 5px; cursor: pointer; border: none; border-radius: 4px; background-color: ${currentTab === 'dashboard' ? '#2563eb' : '#e5e7eb'}; color: ${currentTab === 'dashboard' ? 'white' : '#333'}; font-weight: bold;">대시보드</button>
-          <button id="tab-game" style="padding: 6px 12px; cursor: pointer; border: none; border-radius: 4px; background-color: ${currentTab === 'game' ? '#2563eb' : '#e5e7eb'}; color: ${currentTab === 'game' ? 'white' : '#333'}; font-weight: bold;">🎮 똥피하기</button>
+          <button id="tab-game" style="padding: 6px 12px; cursor: pointer; border: none; border-radius: 4px; background-color: ${currentTab === 'game' ? '#2563eb' : '#e5e7eb'}; color: ${currentTab === 'game' ? 'white' : '#333'}; font-weight: bold;">🎲 모바일 뽑기</button>
         </div>
       </header>
 
+      <!-- 대시보드 화면 -->
       <div id="view-dashboard" style="display: ${currentTab === 'dashboard' ? 'block' : 'none'};">
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px;">
           <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
@@ -66,16 +71,24 @@ function render() {
         </div>
       </div>
 
-      <div id="view-game" style="display: ${currentTab === 'game' ? 'block' : 'none'}; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center;">
-        <h2 style="color: #333; margin-top: 0;">💩 원두 똥피하기 게임</h2>
-        <p style="color: #666; font-size: 14px; margin-bottom: 10px;">좌우 방향키 또는 마우스로 컵을 움직여 떨어지는 원두를 피하세요!</p>
-        <canvas id="gameCanvas" width="400" height="400" style="background: #1e293b; border-radius: 8px; display: block; margin: 0 auto; cursor: pointer;"></canvas>
-        <button id="start-game-btn" style="margin-top: 15px; padding: 8px 16px; background-color: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">게임 시작 / 재시작</button>
+      <!-- 모바일 최적화 미니게임 화면 -->
+      <div id="view-game" style="display: ${currentTab === 'game' ? 'block' : 'none'}; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center;">
+        <h2 style="color: #333; margin-top: 0;">🎁 오늘의 서비스 메뉴 뽑기</h2>
+        <p style="color: #666; font-size: 15px; margin-bottom: 25px;">버튼을 터치하면 오늘의 행운의 음료가 골라집니다!</p>
+        
+        <div style="background: #f0fdf4; border: 2px dashed #bbf7d0; padding: 25px; border-radius: 12px; margin-bottom: 25px;">
+          <p id="lottery-result" style="font-size: 18px; font-weight: bold; color: #15803d; margin: 0;">${lotteryResult}</p>
+        </div>
+
+        <button id="draw-btn" style="width: 100%; max-width: 300px; padding: 15px; font-size: 18px; background-color: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+          ${isDrawing ? '추첨 중...' : '🎲 뽑기 버튼 터치!'}
+        </button>
       </div>
 
     </div>
   `;
 
+  // 탭 전환 이벤트
   document.querySelector('#tab-dashboard')?.addEventListener('click', () => {
     currentTab = 'dashboard';
     render();
@@ -84,9 +97,9 @@ function render() {
   document.querySelector('#tab-game')?.addEventListener('click', () => {
     currentTab = 'game';
     render();
-    initGame();
   });
 
+  // 주문 상태 변경 버튼
   document.querySelectorAll('.status-btn').forEach(button => {
     button.addEventListener('click', (e) => {
       const id = Number((e.currentTarget as HTMLElement).getAttribute('data-id'));
@@ -99,94 +112,28 @@ function render() {
       render();
     });
   });
-}
 
-// 똥피하기 게임 로직
-function initGame() {
-  const canvas = document.querySelector('#gameCanvas') as HTMLCanvasElement;
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D; // <--- 이 부분에 'as CanvasRenderingContext2D'를 붙여줍니다.
-  if (!ctx) return;
-  
-  let playerX = 180;
-  const playerY = 350;
-  const playerWidth = 40;
-  const playerHeight = 30;
+  // 모바일 뽑기 버튼 이벤트
+  document.querySelector('#draw-btn')?.addEventListener('click', () => {
+    if (isDrawing) return;
+    isDrawing = true;
+    lotteryResult = '두근두근 추첨 중입니다... ☕';
+    render();
 
-  let obstacles: { x: number; y: number; speed: number }[] = [];
-  let score = 0;
-  let isPlaying = false;
-  let animationId: number;
-
-  // 마우스 움직임으로 조작
-  canvas.addEventListener('mousemove', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    playerX = e.clientX - rect.left - playerWidth / 2;
-    if (playerX < 0) playerX = 0;
-    if (playerX > canvas.width - playerWidth) playerX = canvas.width - playerWidth;
+    setTimeout(() => {
+      const menus = [
+        '🎉 당첨! 아이스 아메리카노 무료 쿠폰!',
+        '☕ 진한 카페 라떼 한 잔 서비스!',
+        '🍰 달콤한 치즈 케이크 50% 할인!',
+        '🍵 향긋한 유자차 서비스!',
+        '💧 시원한 생수한병 (꽝 아님 주의)'
+      ];
+      const randomIndex = Math.floor(Math.random() * menus.length);
+      lotteryResult = menus[randomIndex];
+      isDrawing = false;
+      render();
+    }, 800);
   });
-
-  document.querySelector('#start-game-btn')?.addEventListener('click', () => {
-    obstacles = [];
-    score = 0;
-    isPlaying = true;
-    cancelAnimationFrame(animationId);
-    loop();
-  });
-
-  function loop() {
-    if (!isPlaying) return;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // 플레이어(카페 컵) 그리기
-    ctx.fillStyle = '#38bdf8';
-    ctx.fillRect(playerX, playerY, playerWidth, playerHeight);
-
-    // 장애물(원두) 생성
-    if (Math.random() < 0.05) {
-      obstacles.push({
-        x: Math.random() * (canvas.width - 20),
-        y: 0,
-        speed: 3 + Math.random() * 4
-      });
-    }
-
-    // 장애물 이동 및 충돌 체크
-    ctx.fillStyle = '#f59e0b';
-    for (let i = obstacles.length - 1; i >= 0; i--) {
-      let obs = obstacles[i];
-      obs.y += obs.speed;
-      ctx.fillRect(obs.x, obs.y, 20, 20);
-
-      // 충돌 체크
-      if (
-        obs.x < playerX + playerWidth &&
-        obs.x + 20 > playerX &&
-        obs.y < playerY + playerHeight &&
-        obs.y + 20 > playerY
-      ) {
-        isPlaying = false;
-        ctx.fillStyle = 'white';
-        ctx.font = '20px sans-serif';
-        ctx.fillText(`게임 종료! 점수: ${score}`, 90, 200);
-        return;
-      }
-
-      // 화면 아래로 나가면 점수 증가 후 제거
-      if (obs.y > canvas.height) {
-        obstacles.splice(i, 1);
-        score += 10;
-      }
-    }
-
-    // 점수 표시
-    ctx.fillStyle = 'white';
-    ctx.font = '14px sans-serif';
-    ctx.fillText(`점수: ${score}`, 15, 25);
-
-    animationId = requestAnimationFrame(loop);
-  }
 }
 
 render();
