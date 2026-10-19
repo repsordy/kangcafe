@@ -1,17 +1,15 @@
-// api/login.ts
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import pg from 'pg';
+import bcrypt from 'bcrypt'; // 암호화 비교용 라이브러리
 
 const { Pool } = pg;
 
-// NeonDB 연결 풀 (Vercel 환경 변수에서 DATABASE_URL을 참조)
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS 처리 (필요시)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -36,11 +34,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const user = result.rows[0];
 
-    if (user.password !== password) {
+    // 평문 비밀번호와 DB의 암호화된 해시값 비교
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
       return res.status(401).json({ success: false, message: '비밀번호가 일치하지 않습니다.' });
     }
 
-    // 로그인 성공
     return res.status(200).json({
       success: true,
       message: '로그인 성공!',
