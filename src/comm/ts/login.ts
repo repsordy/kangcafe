@@ -13,7 +13,7 @@ export function renderLogin(onLoginSuccess: () => void): string {
 
       try {
         // 상대 경로 '/api/login'을 이용해 Vercel 서버리스 함수 호출
-        const response = await fetch('http://localhost:3000/api/login', {
+        const response = await fetch('/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
