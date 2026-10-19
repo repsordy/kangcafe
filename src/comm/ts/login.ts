@@ -1,3 +1,4 @@
+// src/comm/ts/login.ts
 import { state } from './store';
 
 export function renderLogin(onLoginSuccess: () => void): string {
@@ -11,7 +12,8 @@ export function renderLogin(onLoginSuccess: () => void): string {
       const errorMsgEl = document.querySelector('#error-msg') as HTMLElement;
 
       try {
-        const response = await fetch('http://localhost:3000/api/login', {
+        // 상대 경로 '/api/login'을 이용해 Vercel 서버리스 함수 호출
+        const response = await fetch('/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
@@ -21,6 +23,9 @@ export function renderLogin(onLoginSuccess: () => void): string {
 
         if (data.success) {
           state.isLoggedIn = true;
+          if (data.user && data.user.name) {
+            state.userName = data.user.name; // 사용자 이름 저장
+          }
           onLoginSuccess();
         } else {
           if (errorMsgEl) errorMsgEl.innerText = data.message;
@@ -39,8 +44,8 @@ export function renderLogin(onLoginSuccess: () => void): string {
         <p style="color: #6b7280; font-size: 14px; margin-bottom: 24px;">NeonDB 계정으로 로그인해주세요.</p>
         
         <form id="login-form" style="display: flex; flex-direction: column; gap: 14px;">
-          <input type="text" id="login-id" placeholder="아이디" value="kangcafe" style="padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 15px;" />
-          <input type="password" id="login-pw" placeholder="비밀번호" value="1111" style="padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 15px;" />
+          <input type="text" id="login-id" placeholder="아이디" required style="padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 15px;" />
+          <input type="password" id="login-pw" placeholder="비밀번호" required style="padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 15px;" />
           <button type="submit" style="padding: 12px; background-color: #2563eb; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 6px;">로그인</button>
         </form>
         <p id="error-msg" style="font-size: 13px; color: #dc2626; margin-top: 14px; min-height: 20px;"></p>
