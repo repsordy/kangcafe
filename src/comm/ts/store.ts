@@ -1,6 +1,10 @@
+export type SaleRow = { date: string; store: string; menu: string; qty: number; price: number };
+
 export const state = {
   isLoggedIn: false,
   userName: '',
   currentMenu: 'dashboard',
-  // ... 기타 state 데이터
+  rows: [] as SaleRow[],
+  uploadMsg: '',
+  feeRate: 5,
 };
